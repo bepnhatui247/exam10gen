@@ -40,6 +40,10 @@ export interface AnalysisResult {
   difficulty: string;
   structureSummary: string;
   cefrLevel: string;
+  clozeStats: {
+    avgWordCount: number;
+    difficultyDesc: string;
+  };
   readingStats: {
     avgWordCount: number;
     difficultyDesc: string;
