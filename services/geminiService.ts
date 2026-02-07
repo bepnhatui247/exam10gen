@@ -67,7 +67,17 @@ async function generateWithFallback(
 
     } catch (err: any) {
       console.warn(`Model ${currentModel} failed:`, err.message);
-      lastError = err;
+
+      // Better error message for common issues
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+        lastError = new Error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet và thử lại.');
+      } else if (err.message?.includes('API key')) {
+        lastError = new Error('API Key không hợp lệ. Vui lòng kiểm tra lại trong Settings.');
+      } else if (err.message?.includes('quota') || err.message?.includes('rate')) {
+        lastError = new Error('Đã vượt quá giới hạn API. Vui lòng thử lại sau vài giây.');
+      } else {
+        lastError = err;
+      }
       // Continue to next model...
     }
   }
@@ -189,14 +199,4 @@ export const generateFullExam = async (
           "questions": [...]
         }
       ]
-    }
-  `;
-
-  try {
-    const result = await generateWithFallback(config, prompt, systemInstruction, 'exam');
-    return result as ExamData;
-  } catch (error) {
-    console.error("Generation failed:", error);
-    throw error;
-  }
-};
+  
