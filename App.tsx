@@ -111,7 +111,7 @@ const MainContent: React.FC = () => {
   const StepIndicator = ({ step, label, isActive, isCompleted }: { step: number, label: string, isActive: boolean, isCompleted: boolean }) => (
     <div className={`flex items-center gap-2 ${isActive ? 'text-white font-bold' : isCompleted ? 'text-blue-100' : 'text-blue-300/70'}`}>
       <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 text-base transition-colors ${isActive ? 'border-white bg-white text-[#0077b5]' :
-          isCompleted ? 'border-blue-200 text-blue-100' : 'border-blue-400 text-blue-400'
+        isCompleted ? 'border-blue-200 text-blue-100' : 'border-blue-400 text-blue-400'
         }`}>
         {step}
       </div>
@@ -172,7 +172,7 @@ const MainContent: React.FC = () => {
                 <div className="text-xl font-medium text-gray-800">{sampleAnalysis?.difficulty} ({sampleAnalysis?.cefrLevel})</div>
               </div>
               <div className="bg-white p-4 rounded shadow-sm border border-gray-100">
-                <label className="block text-sm font-bold text-[#0077b5] mb-2 uppercase tracking-wide">Số từ bài đọc (Có thể chỉnh sửa)</label>
+                <label className="block text-sm font-bold text-[#0077b5] mb-2 uppercase tracking-wide">Số từ bài đọc hiểu</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="number"
@@ -182,6 +182,28 @@ const MainContent: React.FC = () => {
                         setSampleAnalysis({
                           ...sampleAnalysis,
                           readingStats: { ...sampleAnalysis.readingStats, avgWordCount: parseInt(e.target.value) || 0 }
+                        });
+                      }
+                    }}
+                    className="w-32 px-4 py-2 text-lg border border-gray-300 rounded focus:ring-2 focus:ring-[#0077b5] focus:border-[#0077b5] outline-none"
+                  />
+                  <span className="text-lg text-gray-600 font-medium">từ/bài</span>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded shadow-sm border border-gray-100">
+                <label className="block text-sm font-bold text-[#0077b5] mb-2 uppercase tracking-wide">Số từ bài điền từ (Cloze)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={sampleAnalysis?.clozeStats?.avgWordCount || 0}
+                    onChange={(e) => {
+                      if (sampleAnalysis) {
+                        setSampleAnalysis({
+                          ...sampleAnalysis,
+                          clozeStats: {
+                            ...sampleAnalysis.clozeStats || { avgWordCount: 0, difficultyDesc: '' },
+                            avgWordCount: parseInt(e.target.value) || 0
+                          }
                         });
                       }
                     }}
