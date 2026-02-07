@@ -190,13 +190,39 @@ export const generateFullExam = async (
         {
           "title": "Part 1. Choose the letter...",
           "totalPoints": 0.0,
-          "questions": [...]
+          "questions": [
+            {
+              "id": "unique_id",
+              "partName": "Tên phần",
+              "type": "multiple-choice",
+              "content": "NỘI DUNG CÂU HỎI ĐẦY ĐỦ - BẮT BUỘC PHẢI CÓ. Ví dụ: My sister _____ to school every day.",
+              "options": ["A. go", "B. goes", "C. going", "D. went"],
+              "correctAnswer": "B",
+              "level": "Nhận biết"
+            }
+          ]
         },
         {
           "title": "Part 5. Read the following passage...",
-          "passageContent": "Plastic pollution is one of the most serious... (Nội dung đoạn văn ở đây)",
+          "passageContent": "Đoạn văn đọc hiểu với các chỗ trống (1), (2)... nếu là Cloze Test",
           "totalPoints": 0.0,
-          "questions": [...]
+          "questions": [
+            {
+              "id": "cloze_1",
+              "partName": "Cloze Test",
+              "type": "multiple-choice",
+              "content": "Câu hỏi tương ứng với chỗ trống (1) trong đoạn văn",
+              "options": ["A. option1", "B. option2", "C. option3", "D. option4"],
+              "correctAnswer": "A",
+              "level": "Thông hiểu"
+            }
+          ]
         }
       ]
-  
+    }
+
+    8. LƯU Ý QUAN TRỌNG VỀ CÂU HỎI:
+       - MỖI câu hỏi trong mảng "questions" BẮT BUỘC phải có trường "content" chứa nội dung câu hỏi đầy đủ.
+       - Không được để trống "content". Nếu là dạng điền từ vào chỗ trống, content phải là câu có dấu _____.
+       - Ví dụ câu hỏi ngữ pháp: "The teacher asked if we _____ our homework yet."
+       - Ví dụ câu hỏi từ vựng: "The word 'preserve' in the passage is CLOSEST in meaning
