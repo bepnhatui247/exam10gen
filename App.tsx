@@ -166,7 +166,7 @@ const MainContent: React.FC = () => {
               <h3 className="font-bold text-2xl text-gray-900">Kết quả phân tích & Ma trận</h3>
             </div>
 
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-4 rounded shadow-sm border border-gray-100">
                 <label className="block text-sm font-bold text-[#0077b5] mb-2 uppercase tracking-wide">Độ khó chung</label>
                 <div className="text-xl font-medium text-gray-800">{sampleAnalysis?.difficulty} ({sampleAnalysis?.cefrLevel})</div>
@@ -212,7 +212,7 @@ const MainContent: React.FC = () => {
                   <span className="text-lg text-gray-600 font-medium">từ/bài</span>
                 </div>
               </div>
-              <div className="md:col-span-2 bg-white p-4 rounded shadow-sm border border-gray-100">
+              <div className="md:col-span-3 bg-white p-4 rounded shadow-sm border border-gray-100">
                 <label className="block text-sm font-bold text-[#0077b5] mb-2 uppercase tracking-wide">Độ khó ngữ liệu đọc</label>
                 <input
                   type="text"
