@@ -36,21 +36,29 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
     // Table border style
     const tableBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
     const cellBorders = { top: tableBorder, bottom: tableBorder, left: tableBorder, right: tableBorder };
+    const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+    const noCellBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
 
     // Build content array
     const contentChildren: (Paragraph | Table)[] = [];
 
-    // HEADER
+    // HEADER - Two column layout like preview
     contentChildren.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 120 },
-        children: [new TextRun({ text: examData.title.toUpperCase(), bold: true, size: 28 })]
+        children: [new TextRun({ text: "KỲ THI TUYỂN SINH VÀO LỚP 10 THPT", bold: true, size: 26 })]
     }));
 
     contentChildren.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 120 },
-        children: [new TextRun({ text: examData.subtitle.toUpperCase(), bold: true, size: 26 })]
+        children: [new TextRun({ text: `NĂM HỌC ${new Date().getFullYear()} - ${new Date().getFullYear() + 1}`, bold: true, size: 26 })]
+    }));
+
+    contentChildren.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 120 },
+        children: [new TextRun({ text: "MÔN: TIẾNG ANH", bold: true, size: 24 })]
     }));
 
     contentChildren.push(new Paragraph({
@@ -59,37 +67,50 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
         children: [new TextRun({ text: `Thời gian làm bài: ${examData.duration} phút`, italics: true })]
     }));
 
+    // Divider line
+    contentChildren.push(new Paragraph({
+        spacing: { after: 240 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "000000" } },
+        children: [new TextRun({ text: "" })]
+    }));
+
     // Global question counter across all sections
     let questionNumber = 1;
 
     // SECTIONS
     examData.sections.forEach(section => {
-        // Section Title
+        // Section Title - Bold, italic like preview
         contentChildren.push(new Paragraph({
             spacing: { before: 240, after: 120 },
-            children: [new TextRun({ text: section.title, bold: true, size: 24 })]
+            children: [new TextRun({ text: section.title, bold: true, italics: true, size: 24 })]
         }));
 
         // Passage Content if exists
         if (section.passageContent) {
-            contentChildren.push(new Paragraph({
-                spacing: { before: 120, after: 240 },
-                children: [new TextRun({ text: section.passageContent, italics: true })]
-            }));
+            // Split by paragraphs and add proper indentation
+            const paragraphs = section.passageContent.split('\n').filter(p => p.trim());
+            paragraphs.forEach(para => {
+                contentChildren.push(new Paragraph({
+                    spacing: { after: 120 },
+                    indent: { firstLine: 720 },
+                    children: [new TextRun({ text: para.trim() })]
+                }));
+            });
         }
 
         // Questions
         section.questions.forEach((q) => {
-            // Question with "Question X:" label - simple bold format without border
+            // Question with "Question X:" label
             contentChildren.push(new Paragraph({
-                spacing: { before: 120 },
+                spacing: { before: 180 },
+                indent: { left: 360 },
                 children: [
                     new TextRun({ text: `Question ${questionNumber}: `, bold: true }),
                     new TextRun({ text: q.content })
                 ]
             }));
 
-            // Options (Multiple Choice) - horizontal layout
+            // Options in 2-column grid format (A/B on row 1, C/D on row 2)
             if (q.options && q.options.length > 0) {
                 const formattedOptions = q.options.map((opt, idx) => {
                     if (/^[A-Z]\./.test(opt.trim())) {
@@ -99,11 +120,52 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
                     return `${letter}. ${opt.trim()}`;
                 });
 
-                contentChildren.push(new Paragraph({
-                    indent: { left: 360 },
-                    spacing: { after: 60 },
-                    children: [new TextRun({ text: formattedOptions.join('\t\t') })]
-                }));
+                // Create 2-column table for options (invisible borders)
+                if (formattedOptions.length >= 4) {
+                    // 4 options: 2 rows x 2 columns
+                    contentChildren.push(new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        borders: noCellBorders,
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        margins: { left: 720 },
+                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[0] })] })]
+                                    }),
+                                    new TableCell({
+                                        borders: noCellBorders,
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[1] })] })]
+                                    })
+                                ]
+                            }),
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        borders: noCellBorders,
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        margins: { left: 720 },
+                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[2] })] })]
+                                    }),
+                                    new TableCell({
+                                        borders: noCellBorders,
+                                        width: { size: 50, type: WidthType.PERCENTAGE },
+                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[3] })] })]
+                                    })
+                                ]
+                            })
+                        ]
+                    }));
+                } else {
+                    // Less than 4 options: single line
+                    contentChildren.push(new Paragraph({
+                        indent: { left: 720 },
+                        spacing: { after: 60 },
+                        children: [new TextRun({ text: formattedOptions.join('\t\t') })]
+                    }));
+                }
             }
 
             questionNumber++;
@@ -145,14 +207,14 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
                 children: [
                     new TableCell({
                         borders: cellBorders,
-                        width: { size: 70, type: WidthType.PERCENTAGE },
+                        width: { size: 30, type: WidthType.PERCENTAGE },
                         children: [new Paragraph({
                             children: [new TextRun({ text: `Question ${answerNumber}` })]
                         })]
                     }),
                     new TableCell({
                         borders: cellBorders,
-                        width: { size: 30, type: WidthType.PERCENTAGE },
+                        width: { size: 70, type: WidthType.PERCENTAGE },
                         children: [new Paragraph({
                             children: [new TextRun({ text: q.correctAnswer || "", bold: true })]
                         })]
