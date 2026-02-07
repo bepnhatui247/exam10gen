@@ -9,9 +9,9 @@ const cleanJsonString = (str: string) => {
 };
 
 const DEFAULT_FALLBACK_CHAIN = [
-  GeminiModel.AMBITIOUS_FLASH,
-  GeminiModel.PRO,
-  GeminiModel.FLASH_LEGACY
+  GeminiModel.FLASH_3,
+  GeminiModel.PRO_3,
+  GeminiModel.FLASH_25
 ];
 
 interface GenConfig {
