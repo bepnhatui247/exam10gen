@@ -1,0 +1,5 @@
+{
+  "name": "ExamGen 10 - Tiếng Anh",
+  "description": "Ứng dụng hỗ trợ giáo viên Tiếng Anh THCS tạo đề thi tuyển sinh lớp 10 chuẩn GDPT 2018 sử dụng Google Gemini AI.",
+  "requestFramePermissions": []
+}
