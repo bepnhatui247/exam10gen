@@ -172,6 +172,23 @@ export const generateFullExam = async (
        - questionCount: Bắt buộc phải có trường này, giá trị là số lượng ô trống cần điền (ví dụ: 5).
        - correctAnswer: Liệt kê đáp án theo thứ tự, ví dụ: "1-A, 2-C, 3-D...".
 
+    4.5. QUY ĐỊNH DẠNG BÀI ĐỌC THÔNG TIN NGẮN (READ THE TEXTS):
+       - Dạng bài này gồm nhiều đoạn văn bản ngắn (tin nhắn, biển báo, ghi chú, thông báo...).
+       - MỖI đoạn văn bản ngắn tương ứng với MỘT câu hỏi riêng biệt.
+       - Cấu trúc mỗi câu hỏi:
+         {
+           "id": "short_text_1",
+           "partName": "Read the texts",
+           "type": "multiple-choice",
+           "content": "[TIN NHẮN/BIỂN BÁO]:\\nBarbara, I had a Great Time\\nSkateboarding with you again yesterday!\\nI can't find my cap anywhere.\\nDid I leave it at your place?\\nKen\\n\\n[CÂU HỎI]: What would Ken like Barbara to do?",
+           "options": ["A. look for something that he has lost", "B. bring his skateboard to school", "C. go skateboarding with him soon", "D. decide where they will meet next"],
+           "correctAnswer": "A",
+           "level": "Thông hiểu"
+         }
+       - LƯU Ý: Trường "content" PHẢI chứa CẢ đoạn văn bản ngắn VÀ câu hỏi, cách nhau bằng "[CÂU HỎI]:".
+       - Ví dụ các loại văn bản: tin nhắn điện thoại, biển báo nơi công cộng, ghi chú để lại, email ngắn, thông báo.
+       - Độ khó tương đương: Đoạn văn 30-50 từ, câu hỏi kiểm tra hiểu ý chính hoặc chi tiết cụ thể.
+
     5. MA TRẬN ĐỀ THI:
     ${matrixText}
 
