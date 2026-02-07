@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, ShadingType } from 'docx';
 import { saveAs } from 'file-saver';
-import { ExamData } from '../types';
+import { ExamData, Question } from '../types';
 
 /**
  * Extract raw text from a DOCX file using Mammoth
@@ -30,6 +30,21 @@ export const extractTextFromDocx = async (file: File): Promise<string> => {
 };
 
 /**
+ * Calculate question count - for conversation-matching, count gaps or use questionCount
+ */
+const getQuestionIncrement = (q: Question): number => {
+    if (q.questionCount && q.questionCount > 1) {
+        return q.questionCount;
+    }
+    // For conversation-matching, try to count gaps like (1), (2), etc.
+    if (q.type === 'conversation-matching') {
+        const matches = q.content.match(/\(\d+\)/g);
+        return matches ? matches.length : 1;
+    }
+    return 1;
+};
+
+/**
  * Generate and download a professional DOCX exam file
  */
 export const exportExamToDocx = async (examData: ExamData, filename: string = 'De_Thi_Tieng_Anh.docx') => {
@@ -42,7 +57,7 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
     // Build content array
     const contentChildren: (Paragraph | Table)[] = [];
 
-    // HEADER - Two column layout like preview
+    // HEADER
     contentChildren.push(new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 120 },
@@ -79,7 +94,7 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
 
     // SECTIONS
     examData.sections.forEach(section => {
-        // Section Title - Bold, italic like preview
+        // Section Title - Bold, italic
         contentChildren.push(new Paragraph({
             spacing: { before: 240, after: 120 },
             children: [new TextRun({ text: section.title, bold: true, italics: true, size: 24 })]
@@ -87,7 +102,6 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
 
         // Passage Content if exists
         if (section.passageContent) {
-            // Split by paragraphs and add proper indentation
             const paragraphs = section.passageContent.split('\n').filter(p => p.trim());
             paragraphs.forEach(para => {
                 contentChildren.push(new Paragraph({
@@ -100,75 +114,126 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
 
         // Questions
         section.questions.forEach((q) => {
-            // Question with "Question X:" label
-            contentChildren.push(new Paragraph({
-                spacing: { before: 180 },
-                indent: { left: 360 },
-                children: [
-                    new TextRun({ text: `Question ${questionNumber}: `, bold: true }),
-                    new TextRun({ text: q.content })
-                ]
-            }));
+            const questionIncrement = getQuestionIncrement(q);
+            const startNum = questionNumber;
+            const endNum = questionNumber + questionIncrement - 1;
 
-            // Options in 2-column grid format (A/B on row 1, C/D on row 2)
-            if (q.options && q.options.length > 0) {
-                const formattedOptions = q.options.map((opt, idx) => {
-                    if (/^[A-Z]\./.test(opt.trim())) {
-                        return opt.trim();
-                    }
-                    const letter = String.fromCharCode(65 + idx);
-                    return `${letter}. ${opt.trim()}`;
+            // For conversation-matching: show range "Question 11-15:"
+            if (q.type === 'conversation-matching' && questionIncrement > 1) {
+                // Replace numbers in content to match global numbering
+                let contentWithCorrectNumbers = q.content;
+                let gapCounter = 0;
+                contentWithCorrectNumbers = contentWithCorrectNumbers.replace(/\(\d+\)/g, () => {
+                    const num = startNum + gapCounter;
+                    gapCounter++;
+                    return `(${num})`;
                 });
 
-                // Create 2-column table for options (invisible borders)
-                if (formattedOptions.length >= 4) {
-                    // 4 options: 2 rows x 2 columns
+                // Question header with range
+                contentChildren.push(new Paragraph({
+                    spacing: { before: 180 },
+                    children: [new TextRun({ text: `Question ${startNum}-${endNum}:`, bold: true })]
+                }));
+
+                // Conversation content
+                contentChildren.push(new Paragraph({
+                    spacing: { before: 60, after: 120 },
+                    children: [new TextRun({ text: contentWithCorrectNumbers })]
+                }));
+
+                // Options in a bordered box
+                if (q.options && q.options.length > 0) {
+                    const optionRows: TableRow[] = [];
+                    q.options.forEach((opt, idx) => {
+                        const letter = String.fromCharCode(65 + idx);
+                        const text = opt.trim().match(/^[A-Z]\./) ? opt.trim() : `${letter}. ${opt.trim()}`;
+                        optionRows.push(new TableRow({
+                            children: [
+                                new TableCell({
+                                    borders: noCellBorders,
+                                    children: [new Paragraph({
+                                        indent: { left: 360 },
+                                        children: [new TextRun({ text })]
+                                    })]
+                                })
+                            ]
+                        }));
+                    });
+
                     contentChildren.push(new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        rows: [
-                            new TableRow({
-                                children: [
-                                    new TableCell({
-                                        borders: noCellBorders,
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        margins: { left: 720 },
-                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[0] })] })]
-                                    }),
-                                    new TableCell({
-                                        borders: noCellBorders,
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[1] })] })]
-                                    })
-                                ]
-                            }),
-                            new TableRow({
-                                children: [
-                                    new TableCell({
-                                        borders: noCellBorders,
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        margins: { left: 720 },
-                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[2] })] })]
-                                    }),
-                                    new TableCell({
-                                        borders: noCellBorders,
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[3] })] })]
-                                    })
-                                ]
-                            })
-                        ]
+                        width: { size: 80, type: WidthType.PERCENTAGE },
+                        rows: optionRows
                     }));
-                } else {
-                    // Less than 4 options: single line
-                    contentChildren.push(new Paragraph({
-                        indent: { left: 720 },
-                        spacing: { after: 60 },
-                        children: [new TextRun({ text: formattedOptions.join('\t\t') })]
-                    }));
+                }
+            } else {
+                // Regular multiple choice question
+                contentChildren.push(new Paragraph({
+                    spacing: { before: 180 },
+                    indent: { left: 360 },
+                    children: [
+                        new TextRun({ text: `Question ${startNum}: `, bold: true }),
+                        new TextRun({ text: q.content })
+                    ]
+                }));
+
+                // Options in 2-column grid
+                if (q.options && q.options.length > 0) {
+                    const formattedOptions = q.options.map((opt, idx) => {
+                        if (/^[A-Z]\./.test(opt.trim())) {
+                            return opt.trim();
+                        }
+                        const letter = String.fromCharCode(65 + idx);
+                        return `${letter}. ${opt.trim()}`;
+                    });
+
+                    if (formattedOptions.length >= 4) {
+                        contentChildren.push(new Table({
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            rows: [
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            borders: noCellBorders,
+                                            width: { size: 50, type: WidthType.PERCENTAGE },
+                                            margins: { left: 720 },
+                                            children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[0] })] })]
+                                        }),
+                                        new TableCell({
+                                            borders: noCellBorders,
+                                            width: { size: 50, type: WidthType.PERCENTAGE },
+                                            children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[1] })] })]
+                                        })
+                                    ]
+                                }),
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            borders: noCellBorders,
+                                            width: { size: 50, type: WidthType.PERCENTAGE },
+                                            margins: { left: 720 },
+                                            children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[2] })] })]
+                                        }),
+                                        new TableCell({
+                                            borders: noCellBorders,
+                                            width: { size: 50, type: WidthType.PERCENTAGE },
+                                            children: [new Paragraph({ children: [new TextRun({ text: formattedOptions[3] })] })]
+                                        })
+                                    ]
+                                })
+                            ]
+                        }));
+                    } else {
+                        contentChildren.push(new Paragraph({
+                            indent: { left: 720 },
+                            spacing: { after: 60 },
+                            children: [new TextRun({ text: formattedOptions.join('\t\t') })]
+                        }));
+                    }
                 }
             }
 
-            questionNumber++;
+            // Increment by the number of sub-questions
+            questionNumber += questionIncrement;
         });
     });
 
@@ -182,8 +247,6 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
 
     // Reset counter for Answer Key
     let answerNumber = 1;
-
-    // Build answer table rows
     const tableRows: TableRow[] = [];
 
     examData.sections.forEach(section => {
@@ -203,25 +266,51 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
 
         // Answer rows
         section.questions.forEach(q => {
-            tableRows.push(new TableRow({
-                children: [
-                    new TableCell({
-                        borders: cellBorders,
-                        width: { size: 30, type: WidthType.PERCENTAGE },
-                        children: [new Paragraph({
-                            children: [new TextRun({ text: `Question ${answerNumber}` })]
-                        })]
-                    }),
-                    new TableCell({
-                        borders: cellBorders,
-                        width: { size: 70, type: WidthType.PERCENTAGE },
-                        children: [new Paragraph({
-                            children: [new TextRun({ text: q.correctAnswer || "", bold: true })]
-                        })]
-                    })
-                ]
-            }));
-            answerNumber++;
+            const increment = getQuestionIncrement(q);
+            const startNum = answerNumber;
+            const endNum = answerNumber + increment - 1;
+
+            if (increment > 1) {
+                // Range answer for conversation-matching
+                tableRows.push(new TableRow({
+                    children: [
+                        new TableCell({
+                            borders: cellBorders,
+                            width: { size: 30, type: WidthType.PERCENTAGE },
+                            children: [new Paragraph({
+                                children: [new TextRun({ text: `Question ${startNum}-${endNum}` })]
+                            })]
+                        }),
+                        new TableCell({
+                            borders: cellBorders,
+                            width: { size: 70, type: WidthType.PERCENTAGE },
+                            children: [new Paragraph({
+                                children: [new TextRun({ text: q.correctAnswer || "", bold: true })]
+                            })]
+                        })
+                    ]
+                }));
+            } else {
+                tableRows.push(new TableRow({
+                    children: [
+                        new TableCell({
+                            borders: cellBorders,
+                            width: { size: 30, type: WidthType.PERCENTAGE },
+                            children: [new Paragraph({
+                                children: [new TextRun({ text: `Question ${startNum}` })]
+                            })]
+                        }),
+                        new TableCell({
+                            borders: cellBorders,
+                            width: { size: 70, type: WidthType.PERCENTAGE },
+                            children: [new Paragraph({
+                                children: [new TextRun({ text: q.correctAnswer || "", bold: true })]
+                            })]
+                        })
+                    ]
+                }));
+            }
+            answerNumber += increment;
         });
     });
 
@@ -238,7 +327,7 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
                 document: {
                     run: {
                         font: "Times New Roman",
-                        size: 24 // 12pt
+                        size: 24
                     }
                 }
             }
