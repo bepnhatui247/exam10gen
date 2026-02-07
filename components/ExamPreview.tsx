@@ -126,7 +126,27 @@ const ExamPreview: React.FC<Props> = ({ data, onExport }) => {
               suppressContentEditableWarning
               style={{ fontSize: '13pt', lineHeight: '1.6', fontFamily: '"Times New Roman", Times, serif' }}
             >
-              {q.content}
+              {(() => {
+                // Check for "Read the texts" format
+                if (q.content.includes('[TIN NHẮN/BIỂN BÁO]:') && q.content.includes('[CÂU HỎI]:')) {
+                  const parts = q.content.split('[CÂU HỎI]:');
+                  const textPart = parts[0].replace('[TIN NHẮN/BIỂN BÁO]:', '').trim();
+                  const questionPart = parts[1].trim();
+
+                  return (
+                    <div className="flex flex-col gap-4">
+                      {/* Render the short text/notice in a styled box */}
+                      <div className="border border-gray-400 p-4 bg-gray-50 max-w-md" style={{ border: '1px solid #9ca3af', padding: '15px', backgroundColor: '#f9fafb' }}>
+                        <div className="whitespace-pre-wrap font-serif text-center italic">{textPart}</div>
+                      </div>
+                      {/* Render the actual question */}
+                      <div>{questionPart}</div>
+                    </div>
+                  );
+                }
+                // Regular content
+                return q.content;
+              })()}
             </div>
 
             {/* Options */}
