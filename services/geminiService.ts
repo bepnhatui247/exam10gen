@@ -242,4 +242,14 @@ export const generateFullExam = async (
        - MỖI câu hỏi trong mảng "questions" BẮT BUỘC phải có trường "content" chứa nội dung câu hỏi đầy đủ.
        - Không được để trống "content". Nếu là dạng điền từ vào chỗ trống, content phải là câu có dấu _____.
        - Ví dụ câu hỏi ngữ pháp: "The teacher asked if we _____ our homework yet."
-       - Ví dụ câu hỏi từ vựng: "The word 'preserve' in the passage is CLOSEST in meaning
+       - Ví dụ câu hỏi từ vựng: "The word 'preserve' in the passage is CLOSEST in meaning to _____."
+  `;
+
+  try {
+    const result = await generateWithFallback(config, prompt, systemInstruction, 'exam');
+    return result as ExamData;
+  } catch (error) {
+    console.error("Generation failed:", error);
+    throw error;
+  }
+};
