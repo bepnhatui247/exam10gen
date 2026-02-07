@@ -28,3 +28,181 @@ export const extractTextFromDocx = async (file: File): Promise<string> => {
         reader.readAsArrayBuffer(file);
     });
 };
+
+/**
+ * Generate and download a professional DOCX exam file
+ */
+export const exportExamToDocx = async (examData: ExamData, filename: string = 'De_Thi_Tieng_Anh.docx') => {
+    // Table border style
+    const tableBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+    const cellBorders = { top: tableBorder, bottom: tableBorder, left: tableBorder, right: tableBorder };
+
+    // Build content array
+    const contentChildren: (Paragraph | Table)[] = [];
+
+    // HEADER
+    contentChildren.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 120 },
+        children: [new TextRun({ text: examData.title.toUpperCase(), bold: true, size: 28 })]
+    }));
+
+    contentChildren.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 120 },
+        children: [new TextRun({ text: examData.subtitle.toUpperCase(), bold: true, size: 26 })]
+    }));
+
+    contentChildren.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+        children: [new TextRun({ text: `Thời gian làm bài: ${examData.duration} phút`, italics: true })]
+    }));
+
+    // SECTIONS
+    examData.sections.forEach(section => {
+        // Section Title
+        contentChildren.push(new Paragraph({
+            spacing: { before: 240, after: 120 },
+            children: [new TextRun({ text: section.title, bold: true, size: 24 })]
+        }));
+
+        // Passage Content if exists
+        if (section.passageContent) {
+            contentChildren.push(new Paragraph({
+                spacing: { before: 120, after: 240 },
+                children: [new TextRun({ text: section.passageContent, italics: true })]
+            }));
+        }
+
+        // Questions - track question number globally
+        let questionNumber = 1;
+        section.questions.forEach((q) => {
+            // Question with "Question X:" label in border
+            contentChildren.push(new Paragraph({
+                spacing: { before: 120 },
+                children: [
+                    new TextRun({
+                        text: `Question ${questionNumber}: `,
+                        bold: true,
+                        border: {
+                            color: "000000",
+                            space: 1,
+                            style: BorderStyle.SINGLE,
+                            size: 6
+                        }
+                    }),
+                    new TextRun({ text: q.content })
+                ]
+            }));
+
+            // Options (Multiple Choice) - always horizontal with tabs
+            if (q.options && q.options.length > 0) {
+                // Format: A. option1    B. option2    C. option3    D. option4
+                const formattedOptions = q.options.map((opt, idx) => {
+                    // If option already starts with A., B., etc. use as-is
+                    if (/^[A-Z]\./.test(opt.trim())) {
+                        return opt.trim();
+                    }
+                    // Otherwise add letter prefix
+                    const letter = String.fromCharCode(65 + idx); // A, B, C, D...
+                    return `${letter}. ${opt.trim()}`;
+                });
+
+                contentChildren.push(new Paragraph({
+                    indent: { left: 360 },
+                    spacing: { after: 60 },
+                    children: [new TextRun({ text: formattedOptions.join('\t\t') })]
+                }));
+            }
+
+            questionNumber++;
+        });
+    });
+
+    // ANSWER KEY (New Page)
+    contentChildren.push(new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        pageBreakBefore: true,
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "ĐÁP ÁN GỢI Ý", bold: true })]
+    }));
+
+    // Build answer table rows
+    const tableRows: TableRow[] = [];
+
+    examData.sections.forEach(section => {
+        // Section title row
+        tableRows.push(new TableRow({
+            children: [
+                new TableCell({
+                    borders: cellBorders,
+                    columnSpan: 2,
+                    shading: { fill: "F0F0F0", type: ShadingType.CLEAR },
+                    children: [new Paragraph({
+                        children: [new TextRun({ text: section.title, bold: true })]
+                    })]
+                })
+            ]
+        }));
+
+        // Answer rows
+        section.questions.forEach(q => {
+            const briefContent = q.content.substring(0, 50) + (q.content.length > 50 ? "..." : "");
+            tableRows.push(new TableRow({
+                children: [
+                    new TableCell({
+                        borders: cellBorders,
+                        width: { size: 70, type: WidthType.PERCENTAGE },
+                        children: [new Paragraph({
+                            children: [new TextRun({ text: briefContent })]
+                        })]
+                    }),
+                    new TableCell({
+                        borders: cellBorders,
+                        width: { size: 30, type: WidthType.PERCENTAGE },
+                        children: [new Paragraph({
+                            children: [new TextRun({ text: q.correctAnswer || "", bold: true })]
+                        })]
+                    })
+                ]
+            }));
+        });
+    });
+
+    // Add answer table
+    contentChildren.push(new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: tableRows
+    }));
+
+    // Create document
+    const doc = new Document({
+        styles: {
+            default: {
+                document: {
+                    run: {
+                        font: "Times New Roman",
+                        size: 24 // 12pt
+                    }
+                }
+            }
+        },
+        sections: [{
+            properties: {
+                page: {
+                    margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+                }
+            },
+            children: contentChildren
+        }]
+    });
+
+    try {
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, filename);
+    } catch (err) {
+        console.error("Docx Generation Error:", err);
+        throw new Error("Có lỗi khi tạo file Word.");
+    }
+};
