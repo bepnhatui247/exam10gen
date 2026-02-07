@@ -164,16 +164,58 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
                     }));
                 }
             } else {
-                // Regular question with content
-                const hasContent = q.content && q.content.trim().length > 0;
+                // Check for "Read the texts" format
+                if (q.content.includes('[TIN NHẮN/BIỂN BÁO]:') && q.content.includes('[CÂU HỎI]:')) {
+                    const parts = q.content.split('[CÂU HỎI]:');
+                    const textPart = parts[0].replace('[TIN NHẮN/BIỂN BÁO]:', '').trim();
+                    const questionPart = parts[1].trim();
 
-                contentChildren.push(new Paragraph({
-                    spacing: { before: 180 },
-                    children: [
-                        new TextRun({ text: `Question ${startNum}: `, bold: true }),
-                        new TextRun({ text: hasContent ? q.content : "" })
-                    ]
-                }));
+                    // Render text in a bordered box (Table)
+                    contentChildren.push(new Table({
+                        width: { size: 60, type: WidthType.PERCENTAGE },
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        borders: {
+                                            top: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+                                            bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+                                            left: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+                                            right: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+                                        },
+                                        margins: { top: 100, bottom: 100, left: 200, right: 200 },
+                                        children: [
+                                            new Paragraph({
+                                                alignment: AlignmentType.CENTER,
+                                                children: [new TextRun({ text: textPart, italics: true })]
+                                            })
+                                        ]
+                                    })
+                                ]
+                            })
+                        ]
+                    }));
+
+                    // Render Question below box
+                    contentChildren.push(new Paragraph({
+                        spacing: { before: 120 },
+                        children: [
+                            new TextRun({ text: `Question ${startNum}: `, bold: true }),
+                            new TextRun({ text: questionPart })
+                        ]
+                    }));
+                } else {
+                    // Regular question with content
+                    const hasContent = q.content && q.content.trim().length > 0;
+
+                    contentChildren.push(new Paragraph({
+                        spacing: { before: 180 },
+                        children: [
+                            new TextRun({ text: `Question ${startNum}: `, bold: true }),
+                            new TextRun({ text: hasContent ? q.content : "" })
+                        ]
+                    }));
+                }
 
                 // Options horizontal
                 if (q.options && q.options.length > 0) {
