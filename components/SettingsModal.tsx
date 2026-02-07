@@ -20,21 +20,21 @@ export const SettingsModal = () => {
 
     const models = [
         {
-            id: GeminiModel.AMBITIOUS_FLASH,
-            name: "Gemini 2.0 Flash",
+            id: GeminiModel.FLASH_3,
+            name: "Gemini 3 Flash Preview",
             desc: "Tốc độ nhanh, phản hồi tức thì. Khuyên dùng cho hầu hết tác vụ.",
             tag: "Khuyên dùng"
         },
         {
-            id: GeminiModel.PRO,
-            name: "Gemini 2.0 Pro",
+            id: GeminiModel.PRO_3,
+            name: "Gemini 3 Pro Preview",
             desc: "Mô hình thông minh nhất, lý luận sâu. Dùng cho đề thi khó/phức tạp.",
             tag: "Mạnh nhất"
         },
         {
-            id: GeminiModel.FLASH_LEGACY,
-            name: "Gemini 1.5 Flash",
-            desc: "Phiên bản cũ ổn định, tiết kiệm chi phí.",
+            id: GeminiModel.FLASH_25,
+            name: "Gemini 2.5 Flash",
+            desc: "Phiên bản ổn định, tiết kiệm chi phí.",
             tag: "Backup"
         }
     ];
@@ -106,8 +106,8 @@ export const SettingsModal = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <h3 className={`font-bold ${isSelected ? 'text-[#0077b5]' : 'text-gray-900'}`}>{m.name}</h3>
-                                                    <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-bold ${m.id === GeminiModel.AMBITIOUS_FLASH ? 'bg-green-100 text-green-700' :
-                                                            m.id === GeminiModel.PRO ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                                                    <span className={`text-[10px] uppercase px-2 py-0.5 rounded-full font-bold ${m.id === GeminiModel.FLASH_3 ? 'bg-green-100 text-green-700' :
+                                                        m.id === GeminiModel.PRO_3 ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
                                                         }`}>
                                                         {m.tag}
                                                     </span>
