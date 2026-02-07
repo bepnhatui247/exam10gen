@@ -98,18 +98,23 @@ export const analyzeExamFile = async (fileContent: string, config: GenConfig): P
     1. Xác định mức độ khó tổng thể (Dễ/Trung bình/Khá/Khó).
     2. Tóm tắt cấu trúc (Các phần chính, số lượng câu).
     3. Đánh giá khung năng lực ngoại ngữ (CEFR Level ước lượng, ví dụ A2, B1).
-    4. PHÂN TÍCH RIÊNG PHẦN ĐỌC HIỂU (READING):
-       - Tính toán ước lượng số lượng từ (word count) trung bình của các đoạn văn/bài đọc có trong đề.
-       - Mô tả ngắn gọn độ phức tạp của ngữ liệu đọc (ví dụ: Chủ đề quen thuộc, câu đơn giản hay văn bản học thuật, câu ghép phức tạp).
+    4. PHÂN TÍCH RIÊNG PHẦN ĐỌC HIỂU (READING) VÀ ĐIỀN TỪ (CLOZE TEST):
+       - READING COMPREHENSION: Tính toán số từ trung bình của các bài đọc hiểu.
+       - CLOZE TEST: Tính toán số từ trung bình của các đoạn văn điền từ.
+       - Mô tả ngắn gọn độ phức tạp ngữ liệu.
     
     Trả về định dạng JSON:
     {
       "difficulty": "string",
       "structureSummary": "string",
       "cefrLevel": "string",
+      "clozeStats": {
+        "avgWordCount": number, 
+        "difficultyDesc": "string"
+      },
       "readingStats": {
-        "avgWordCount": number, // Ví dụ: 150
-        "difficultyDesc": "string" // Ví dụ: "Văn bản thông tin, từ vựng chủ đề môi trường, câu phức trung bình"
+        "avgWordCount": number,
+        "difficultyDesc": "string"
       }
     }
 
@@ -153,11 +158,12 @@ export const generateFullExam = async (
 
     1. ĐỘ KHÓ MỤC TIÊU: ${analysisData.difficulty} (Tương đương ${analysisData.cefrLevel}).
     
-    2. RÀNG BUỘC PHẦN ĐỌC HIỂU (READING) - BẮT BUỘC TUÂN THỦ:
-       - ĐỘ DÀI: Các bài đọc phải có độ dài khoảng ${analysisData.readingStats.avgWordCount} từ/bài (Chấp nhận sai số ±10%). 
+    2. RÀNG BUỘC PHẦN ĐỌC HIỂU (READING) VÀ ĐIỀN TỪ (CLOZE TEST) - BẮT BUỘC TUÂN THỦ:
+       - BÀI ĐỌC HIỂU (Reading Comprehension): Độ dài khoảng ${analysisData.readingStats.avgWordCount} từ/bài (±10%).
+       - BÀI ĐIỀN TỪ (Cloze Test): Độ dài khoảng ${analysisData.clozeStats.avgWordCount} từ/bài (±10%).
        - NGỮ LIỆU: Sử dụng ngữ liệu có độ khó tương đương mô tả: "${analysisData.readingStats.difficultyDesc}".
        - CHỦ ĐỀ: Nằm trong chương trình SGK Tiếng Anh 9 mới (Global Success, Friends Plus...).
-       - LƯU Ý: Nếu ma trận yêu cầu 2 bài đọc, cả 2 bài phải tuân thủ độ dài này.
+       - LƯU Ý: Nếu ma trận yêu cầu nhiều bài đọc, hãy tuân thủ độ dài từng loại tương ứng.
 
     3. CẤU TRÚC JSON CHO BÀI ĐỌC (READING/CLOZE TEST):
        - NỘI DUNG ĐOẠN VĂN: Phải đặt trong trường "passageContent" của đối tượng Section. Tuyệt đối không đặt đoạn văn vào nội dung câu hỏi (Questions).
