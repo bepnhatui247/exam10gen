@@ -16,7 +16,6 @@ export const extractTextFromDocx = async (file: File): Promise<string> => {
                     reject(new Error("File is empty"));
                     return;
                 }
-
                 const result = await mammoth.extractRawText({ arrayBuffer });
                 resolve(result.value);
             } catch (err) {
@@ -30,12 +29,10 @@ export const extractTextFromDocx = async (file: File): Promise<string> => {
 };
 
 /**
- * Calculate question count - for conversation-matching, count gaps or use questionCount
+ * Calculate question count for conversation-matching or cloze
  */
 const getQuestionIncrement = (q: Question): number => {
-    if (q.questionCount && q.questionCount > 1) {
-        return q.questionCount;
-    }
+    if (q.questionCount && q.questionCount > 1) return q.questionCount;
     if (q.type === 'conversation-matching') {
         const matches = q.content.match(/\(\d+\)/g);
         return matches ? matches.length : 1;
@@ -88,9 +85,22 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
             children: [new TextRun({ text: section.title, bold: true, size: 24 })]
         }));
 
-        // Passage Content
-        if (section.passageContent) {
-            const paragraphs = section.passageContent.split('\n').filter(p => p.trim());
+        // Check if this is a Cloze/Reading section (has passageContent)
+        const isClozeSection = section.passageContent && section.passageContent.trim().length > 0;
+
+        // Passage Content with numbered gaps
+        if (isClozeSection) {
+            // Replace (1), (2)... with correct global numbers
+            let passageWithNumbers = section.passageContent!;
+            let gapCounter = 0;
+            const startQuestionNum = questionNumber;
+            passageWithNumbers = passageWithNumbers.replace(/\(\d+\)/g, () => {
+                const num = startQuestionNum + gapCounter;
+                gapCounter++;
+                return `(${num})`;
+            });
+
+            const paragraphs = passageWithNumbers.split('\n').filter(p => p.trim());
             paragraphs.forEach(para => {
                 contentChildren.push(new Paragraph({
                     spacing: { after: 120 },
@@ -134,13 +144,34 @@ export const exportExamToDocx = async (examData: ExamData, filename: string = 'D
                         }));
                     });
                 }
+            } else if (isClozeSection) {
+                // Cloze section: questions are just options for gaps in passageContent
+                // Only show "Question X:" with options, no content (content is in passage)
+                contentChildren.push(new Paragraph({
+                    spacing: { before: 180 },
+                    children: [new TextRun({ text: `Question ${startNum}:`, bold: true })]
+                }));
+
+                // Options horizontal
+                if (q.options && q.options.length > 0) {
+                    const opts = q.options.map((opt, idx) => {
+                        if (/^[A-Z]\./.test(opt.trim())) return opt.trim();
+                        return `${String.fromCharCode(65 + idx)}. ${opt.trim()}`;
+                    });
+                    contentChildren.push(new Paragraph({
+                        indent: { left: 720 },
+                        children: [new TextRun({ text: opts.join('\t\t') })]
+                    }));
+                }
             } else {
-                // Regular question
+                // Regular question with content
+                const hasContent = q.content && q.content.trim().length > 0;
+
                 contentChildren.push(new Paragraph({
                     spacing: { before: 180 },
                     children: [
                         new TextRun({ text: `Question ${startNum}: `, bold: true }),
-                        new TextRun({ text: q.content })
+                        new TextRun({ text: hasContent ? q.content : "" })
                     ]
                 }));
 
