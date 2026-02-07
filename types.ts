@@ -6,9 +6,9 @@ export enum AppStep {
 }
 
 export enum GeminiModel {
-  AMBITIOUS_FLASH = 'gemini-3-flash-preview',
-  PRO = 'gemini-3-pro-preview',
-  FLASH_LEGACY = 'gemini-2.5-flash'
+  FLASH_3 = 'gemini-3-flash-preview',
+  PRO_3 = 'gemini-3-pro-preview',
+  FLASH_25 = 'gemini-2.5-flash'
 }
 
 export enum QuestionLevel {
