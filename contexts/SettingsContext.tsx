@@ -18,7 +18,7 @@ const STORAGE_KEY_MODEL = 'examgen_model';
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [apiKey, setApiKeyState] = useState('');
-    const [model, setModelState] = useState<GeminiModel>(GeminiModel.AMBITIOUS_FLASH);
+    const [model, setModelState] = useState<GeminiModel>(GeminiModel.FLASH_3);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     useEffect(() => {
@@ -31,8 +31,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (storedModel && Object.values(GeminiModel).includes(storedModel as GeminiModel)) {
             setModelState(storedModel as GeminiModel);
         } else {
-            // Default to Flash as per instructions "Order: Flash (Default)"
-            setModelState(GeminiModel.AMBITIOUS_FLASH);
+            setModelState(GeminiModel.FLASH_3);
         }
 
         // Auto-open settings if no key found on load
