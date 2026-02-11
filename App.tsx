@@ -321,6 +321,37 @@ const MainContent: React.FC = () => {
 
       {/* BODY */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10 relative">
+        {/* Quick Guide */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <UploadIcon className="w-6 h-6 text-[#0077b5]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">Bước 1: Tải lên</h3>
+              <p className="text-sm text-gray-500">Upload đề mẫu (DOCX) để AI phân tích cấu trúc</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <WandIcon className="w-6 h-6 text-[#0077b5]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">Bước 2: Ma trận</h3>
+              <p className="text-sm text-gray-500">Xem kết quả phân tích và tùy chỉnh ma trận</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <DownloadIcon className="w-6 h-6 text-[#0077b5]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">Bước 3: Tải về</h3>
+              <p className="text-sm text-gray-500">Xuất đề thi mới ra file Word (.docx)</p>
+            </div>
+          </div>
+        </div>
+
         <SettingsModal />
 
         {error && (
